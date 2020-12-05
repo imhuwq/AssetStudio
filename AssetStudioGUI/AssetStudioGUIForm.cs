@@ -84,8 +84,10 @@ namespace AssetStudioGUI
         [DllImport("gdi32.dll")]
         private static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pdv, [In] ref uint pcFonts);
 
-        public AssetStudioGUIForm()
+        public AssetStudioGUIForm(string loadFolder = "", string saveFolder = "")
         {
+            Visible = false;
+
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             InitializeComponent();
             Text = $"AssetStudioGUI v{Application.ProductVersion}";
@@ -99,6 +101,12 @@ namespace AssetStudioGUI
             Logger.Default = new GUILogger(StatusStripUpdate);
             Progress.Default = new GUIProgress(SetProgressBarValue);
             Studio.StatusStripUpdate = StatusStripUpdate;
+
+            if (loadFolder.Length > 0 && saveFolder.Length > 0) 
+            {
+                Task.Run(() => assetsManager.LoadFolder(loadFolder)).Wait();
+                BuildAssetStructures(saveFolder, false, true);
+            }
         }
 
         private void AssetStudioGUIForm_DragEnter(object sender, DragEventArgs e)
@@ -183,7 +191,7 @@ namespace AssetStudioGUI
             }
         }
 
-        private async void BuildAssetStructures()
+        private async void BuildAssetStructures(string saveFolder = "", bool openFolder = true, bool autoExit = false)
         {
             if (assetsManager.assetsFileList.Count == 0)
             {
@@ -251,6 +259,17 @@ namespace AssetStudioGUI
                 log += $" and {m_ObjectsCount - objectsCount} assets failed to read";
             }
             StatusStripUpdate(log);
+
+            if (saveFolder.Length > 0) 
+            {
+
+                if (Directory.Exists(saveFolder))  
+                {  
+                    Directory.Delete(saveFolder, true);  
+                }
+                Directory.CreateDirectory(saveFolder);
+                ExportAssets(1, ExportType.Convert, saveFolder, openFolder, autoExit);
+            }
         }
 
         private void typeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1492,12 +1511,19 @@ namespace AssetStudioGUI
             assetListView.EndUpdate();
         }
 
-        private void ExportAssets(int type, ExportType exportType)
+        private void ExportAssets(int type, ExportType exportType, string saveFolder = "", bool openFolder = true, bool autoExit = false)
         {
             if (exportableAssets.Count > 0)
-            {
-                var saveFolderDialog = new OpenFolderDialog();
-                if (saveFolderDialog.ShowDialog(this) == DialogResult.OK)
+            {   
+                if (saveFolder.Length == 0)
+                {
+                    var saveFolderDialog = new OpenFolderDialog();
+                    if (saveFolderDialog.ShowDialog(this) == DialogResult.OK) 
+                    {
+                        saveFolder = saveFolderDialog.Folder;
+                    }
+                }
+                if (saveFolder.Length > 0)
                 {
                     timer.Stop();
 
@@ -1514,7 +1540,7 @@ namespace AssetStudioGUI
                             toExportAssets = visibleAssets;
                             break;
                     }
-                    Studio.ExportAssets(saveFolderDialog.Folder, toExportAssets, exportType);
+                    Studio.ExportAssets(saveFolder, toExportAssets, exportType, openFolder, autoExit);
                 }
             }
             else

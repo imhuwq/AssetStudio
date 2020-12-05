@@ -357,7 +357,8 @@ namespace AssetStudioGUI
             return typeMap;
         }
 
-        public static void ExportAssets(string savePath, List<AssetItem> toExportAssets, ExportType exportType)
+        public static void ExportAssets(string savePath, List<AssetItem> toExportAssets, ExportType exportType, 
+                                        bool openFolder = true, bool autoExit = false)
         {
             ThreadPool.QueueUserWorkItem(state =>
             {
@@ -435,9 +436,14 @@ namespace AssetStudioGUI
 
                 StatusStripUpdate(statusText);
 
-                if (Properties.Settings.Default.openAfterExport && exportedCount > 0)
+                if (Properties.Settings.Default.openAfterExport && exportedCount > 0 && openFolder)
                 {
                     Process.Start(savePath);
+                }
+
+                if (autoExit) {
+                    System.Windows.Forms.Application.Exit();
+                    //System.Environment.Exit(0);
                 }
             });
         }
