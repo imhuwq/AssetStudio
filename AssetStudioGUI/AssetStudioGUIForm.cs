@@ -86,7 +86,9 @@ namespace AssetStudioGUI
 
         public AssetStudioGUIForm(string loadFolder = "", string saveFolder = "")
         {
-            Visible = false;
+            if (loadFolder.Length > 0 && saveFolder.Length > 0) {
+                Visible = false;
+            }
 
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             InitializeComponent();

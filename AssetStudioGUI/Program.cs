@@ -31,7 +31,7 @@ namespace AssetStudioGUI
                 Application.Run();
             } else {
                 var form = new AssetStudioGUIForm();
-                Application.Run();
+                Application.Run(form);
             }
         }
     }
